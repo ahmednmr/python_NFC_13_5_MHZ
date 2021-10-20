@@ -36,9 +36,11 @@ def usb_read_hex_ch_serial():
 	return rec_char
 	
 def usb_write_str_serial(_string):
+	usb_flush_recieving()
 	usb_init_port.ser.write(_string)
 
-	
+def usb_flush_recieving():
+	usb_init_port.ser.flushInput()	
 
 	
 '''		

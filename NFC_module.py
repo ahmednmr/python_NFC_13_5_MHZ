@@ -1,6 +1,7 @@
 import usb_port_module as usb
 import helper_module as helper
 from array import *
+import time
 
 '''
 //U8 NFC_Fixed_Company_ID_array[4]           ={0xE9,0xE8,0xE7,0xE6};
@@ -21,12 +22,14 @@ unsigned char response_write_page[]        ={0x00,0x00,0xFF,0x00,0xFF,0x00,0x00,
 '''
 DATA_TO_NFC_BYTE=0xD4
 END_FRAME_BYTE=0x00
+DATA_RECIEVING_CIZE=12
+
 fixed_frame_arr        =array('B',[0x55,0x55,0x00,0x00,0x00,0x00,0x00,0xFF])
 config_arr             =array('B',[0x14,0x01,0x14,0x01])
 response_config_arr    =array('B',[0X00,0X00,0XFF,0X00,0XFF,0X00,0X00,0X00,0XFF,0X02,0XFE,0XD5,0X15,0X16,0X00])
 
 read_tag_arr           =array('B',[0x4A,0x01,0x00])
-response_read_tag_arr  =array('B',[0x00,0x00,0xFF,0x00,0xFF,0x00,0x00,0x00,0xFF,0X0F,0XF1,0XD5,0X4B,0X01])
+response_read_tag_arr  =array('B',[0x00,0x00,0xFF,0x00,0xFF,0x00,0x00,0x00,0x00,0xFF,0X0F,0XF1,0XD5,0X4B,0X01])
 NFC_Recieved_Data      =array('B')
 
 read_tag_data          =array('B',[0x40,0x01,0x30,0x04])
@@ -39,7 +42,7 @@ response_write_page    =array('B',[0x00,0x00,0xFF,0x00,0xFF,0x00,0x00,0x00,0xFF,
 
 def nfc_init(usb_port):
 	rec_arr =array('B')
-	usb.usb_init_port(usb_port,"115200",0.0016)
+	usb.usb_init_port(usb_port,"115200",0.01)
 	
 	
 	nfc_send_data_frame(config_arr)
@@ -47,8 +50,8 @@ def nfc_init(usb_port):
 		y=usb.usb_read_ch_serial()
 		rec_arr.append(int.from_bytes(y, "big"))
 	
-	#for i in range(0,len(response_config_arr)):
-	#	print(hex(rec_arr[i]))	
+	for i in range(0,len(response_config_arr)):
+		print(hex(rec_arr[i])+" ",end='')	
 
 	comparison = rec_arr == response_config_arr
 	if comparison :
@@ -76,7 +79,74 @@ def nfc_send_data_frame(data_array):
 	
 	usb.usb_write_str_serial(send_arr)
 
-
+def nfc_check_tag_exist():
+	rec_arr =array('B')
 	
+	
+	nfc_send_data_frame(read_tag_arr)
+	
+	for i in range(0,len(response_read_tag_arr)):
+		y=usb.usb_read_ch_serial()
+		rec_arr.append(int.from_bytes(y, "big"))
+	
+	#for i in range(0,len(response_read_tag_arr)):
+	#	print(hex(rec_arr[i])+" ",end='')	
+	
+	comparison = rec_arr == response_read_tag_arr
+	if comparison :
+		return True
+	else :
+		return False
+		
+def nfc_read_tag_data():
+	rec_arr =array('B')
+	data_arr=array('B')
+	_company_id=0
+	_tag_id=0
+	_tag_points=0
+	
+	nfc_send_data_frame(read_tag_data)
+	
+	for i in range(0,len(response_read_tag_data)):
+		y=usb.usb_read_ch_serial()
+		rec_arr.append(int.from_bytes(y, "big"))
+	
+	for i in range(0,DATA_RECIEVING_CIZE):
+		y=usb.usb_read_ch_serial()
+		data_arr.append(int.from_bytes(y, "big"))
+	
+	#for i in range(0,len(response_read_tag_data)):
+	#	print(hex(rec_arr[i])+" ")	
+	
+	#for i in range(0,DATA_RECIEVING_CIZE):
+	#	print(hex(data_arr[i])+" ")	
+	
+	_company_id=(data_arr[0]<<24)|(data_arr[1]<<16)|(data_arr[2]<<8)|(data_arr[3])
+	#print(company_id)
+	_tag_id=(data_arr[4]<<24)|(data_arr[5]<<16)|(data_arr[6]<<8)|(data_arr[7])
+	#print(tag_id)
+	_tag_points=(data_arr[8]<<24)|(data_arr[9]<<16)|(data_arr[10]<<8)|(data_arr[11])
+	#print(tag_points)
+	
+	comparison = rec_arr == response_read_tag_data
+	if comparison :
+		return True,_company_id,_tag_id,_tag_points
+	else :
+		return False		
+
+
+
+company_id,tag_id,tag_points=0,0,0		
 init_status=nfc_init("COM3")	
-print(init_status)
+print("\n init nfc ="+str(init_status))
+
+
+tag_exist_status=nfc_check_tag_exist()
+print("Tag exist ="+str(tag_exist_status))
+
+if tag_exist_status==True :
+	valid_data_status,company_id,tag_id,tag_points=nfc_read_tag_data()
+	print("valid data reding ="+str(valid_data_status))
+	print("company id ="+str(company_id))
+	print("tag id ="+str(tag_id))
+	print("tag points ="+str(tag_points))
