@@ -190,10 +190,15 @@ def nfc_write_Tag_Points(points):
 def nfc_deinit():
 	usb.usb_close_port()
 
-'''
-	
+def nfc_port_status():
+	status=usb.usb_port_status()
+	return status
+
+'''	
 init_status=nfc_init("COM3")	
 print("\n init nfc ="+str(init_status))
+nfc_deinit()
+print(nfc_port_status())
 
 
 val =int(input("""Enter your value: 

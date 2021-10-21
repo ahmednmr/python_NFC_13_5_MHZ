@@ -1,4 +1,8 @@
-import tkinter as tk
+'''
+remove usb bug
+'''
+
+import tkinter  as tk
 import tkinter.messagebox as msgbox
 import NFC_module as NFC
 import serial.tools.list_ports
@@ -63,7 +67,27 @@ class Window(tk.Tk):
 	
 	
 	def Start_programming(self):
-		print("Start_programming")
+		NFC.company_id=int(self.company_id_text.get())
+		NFC.tag_id=int(self.tag_id_text.get())
+		NFC.tag_points=int(self.tag_points_text.get())
+		
+		if(NFC.tag_id<=1000000) :
+			print("Start_programming")
+			print("read_tag")
+			for x in range (1,10):
+				tag_exist_status=NFC.nfc_check_tag_exist()
+				if tag_exist_status==True:
+					print("Tag exist ="+str(tag_exist_status))
+					status_company_id=NFC.nfc_write_company_id(NFC.company_id)
+					status_tag_id=NFC.nfc_write_tag_ID(NFC.tag_id)
+					status_tag_points=NFC.nfc_write_Tag_Points(NFC.tag_points)
+					break
+				time.sleep(0.2)	
+		else :
+			print("tag number should be less than 1000000")
+		
+		if status_company_id==True :
+			print("done writing")
 		
 	def Close_PORT(self):
 		print("Close_PORT")
@@ -103,14 +127,20 @@ class Window(tk.Tk):
 		self.after(0, self.destroy)
 		
 	def task(self):
+	
 		
-		window.after(1, self.task)  # reschedule event in 2 seconds
+		window.after(100, self.task)  # reschedule event in 2 seconds
 
 
 if __name__ == "__main__":
 	window = Window()
 	window.geometry("490x210")
-	window.after(1, window.task)
+	window.after(100, window.task)
 	window.mainloop()
     
- 
+'''
+ 	def task2(self):
+		is_port_open=NFC.nfc_port_status()
+		if is_port_open==True :
+			print("port is open")
+'''			
