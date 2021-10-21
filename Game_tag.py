@@ -26,16 +26,29 @@ class Window(tk.Tk):
 		
 		self.clicked_ports = tk.StringVar()
 		self.clicked_ports.set( "COM3" )
-		
 		self.label_port_text = tk.Label(self, text = "Select The USB PORT").place(x = 10,y = 10) 
 		self.drop_ports = tk.OptionMenu( self , self.clicked_ports , *available_ports ).place(x=15,y=30)
 
 		
-		self.label_text= tk.StringVar()
-		self.label_text.set( "NFC is Not Connected" )
-		self.label_port_status = tk.Label(self, textvariable = self.label_text)
+		self.nfc_status_text= tk.StringVar()
+		self.nfc_status_text.set( "NFC is Not Connected" )
+		self.label_port_status = tk.Label(self, textvariable = self.nfc_status_text)
 		self.label_port_status.place(x = 120,y = 35) 
 		
+		self.company_id_text                = tk.StringVar()
+		self.company_id_text.set("")
+		self.company_id_label         = tk.Label(self, text = "Company ID :").place(x = 10,y = 70)  
+		self.company_id_name_entry    = tk.Entry(self, textvar=self.company_id_text,width=20).place(x=120,y=70)
+		
+		self.tag_id_text                = tk.StringVar()
+		self.tag_id_text.set("")
+		self.tag_id_label         = tk.Label(self, text = "Tag Number :").place(x = 10,y = 105)  
+		self.tag_id_name_entry    = tk.Entry(self, textvar=self.tag_id_text,width=20).place(x=120,y=105)
+		
+		self.tag_points_text                = tk.StringVar()
+		self.tag_points_text.set("")
+		self.tag_points_label         = tk.Label(self, text = "Tag    Points  :").place(x = 10,y = 140)  
+		self.tag_points_name_entry    = tk.Entry(self, textvar=self.tag_points_text,width=20).place(x=120,y=140)
 		
 		Open_serial_button = tk.Button(self, text="Connect NFC",command=self.Open_PORT,height=1,width=10).place(x = 400,y = 10)  
 		
@@ -54,14 +67,17 @@ class Window(tk.Tk):
 		
 	def Close_PORT(self):
 		print("Close_PORT")
+		self.company_id_text.set("")
+		self.tag_id_text.set("")
+		self.tag_points_text.set("")
 		NFC.nfc_deinit()
-		self.label_text.set("NFC is Not Connected")
+		self.nfc_status_text.set("NFC is Not Connected")
 
 	def Open_PORT(self):
 		print("Open_PORT")
 		nfc_init=NFC.nfc_init(self.clicked_ports.get())
 		if nfc_init==True:
-			self.label_text.set("NFC is Connected")
+			self.nfc_status_text.set("NFC is Connected")
 	
 	def read_tag(self):
 		
@@ -72,6 +88,9 @@ class Window(tk.Tk):
 				print("Tag exist ="+str(tag_exist_status))
 				read_status=NFC.nfc_read_tag_data()
 				if read_status==True :
+					self.company_id_text.set(NFC.company_id)
+					self.tag_id_text.set(NFC.tag_id)
+					self.tag_points_text.set(NFC.tag_points)
 					print(NFC.company_id)
 					print(NFC.tag_id)
 					print(NFC.tag_points)
